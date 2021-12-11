@@ -12,15 +12,15 @@ Usaremos el paquete [`flag`](https://pkg.go.dev/flag) de la biblioteca estándar
 package main
 
 import (
-	"flag"
+    "flag"
     "fmt"
 )
 
 func main() {
 
-	csvFile := flag.String("csv", "problems.csv", "especifica un fichero de problemas en formato CSV")
-	flag.Parse()
-	fmt.Println("Fichero especificado", *csvFile)
+    csvFile := flag.String("csv", "problems.csv", "especifica un fichero de problemas en formato CSV")
+    flag.Parse()
+    fmt.Println("Fichero especificado", *csvFile)
 }
 ```
 
@@ -59,23 +59,23 @@ El primer paso, es abrir el fichero para poder leerlo. Para ello, usamos el paqu
 package main
 
 import (
-	"flag"
-	"fmt"
-	"os"
+    "flag"
+    "fmt"
+    "os"
 )
 
 func main() {
 
-	csvFile := flag.String("csv", "problems.csv", "especifica un fichero de problemas en formato CSV")
-	flag.Parse()
-	fmt.Println("Fichero especificado", *csvFile)
+    csvFile := flag.String("csv", "problems.csv", "especifica un fichero de problemas en formato CSV")
+    flag.Parse()
+    fmt.Println("Fichero especificado", *csvFile)
 
-	file, err := os.Open(*csvFile)
-	if err != nil {
-		fmt.Printf("No se ha podido abrir el fichero %s.\nError %s\n", *csvFile, err.Error())
-		os.Exit(1)
-	}
-	_ = file
+    file, err := os.Open(*csvFile)
+    if err != nil {
+        fmt.Printf("No se ha podido abrir el fichero %s.\nError %s\n", *csvFile, err.Error())
+        os.Exit(1)
+    }
+    _ = file
 }
 ```
 
@@ -104,35 +104,35 @@ Para abrir el fichero, creamos un nuevo *Reader* usando `csv.NewReader`, que dev
 package main
 
 import (
-	"encoding/csv"
-	"flag"
-	"fmt"
-	"os"
+    "encoding/csv"
+    "flag"
+    "fmt"
+    "os"
 )
 
 const (
-	QUIZ_FILE_NOT_FOUND         int = 1
-	ERROR_READING_QUIZ_CSV_FILE int = 2
+    QUIZ_FILE_NOT_FOUND         int = 1
+    ERROR_READING_QUIZ_CSV_FILE int = 2
 )
 
 func main() {
 
-	csvFile := flag.String("csv", "problems.csv", "Fichero de problemas en formato 'pregunta,respuesta' (CSV)")
-	flag.Parse()
+    csvFile := flag.String("csv", "problems.csv", "Fichero de problemas en formato 'pregunta,respuesta' (CSV)")
+    flag.Parse()
 
-	file, err := os.Open(*csvFile)
-	if err != nil {
-		fmt.Printf("Error al abrir el fichero %s.\n%s\n", *csvFile, err.Error())
-		os.Exit(QUIZ_FILE_NOT_FOUND)
-	}
+    file, err := os.Open(*csvFile)
+    if err != nil {
+        fmt.Printf("Error al abrir el fichero %s.\n%s\n", *csvFile, err.Error())
+        os.Exit(QUIZ_FILE_NOT_FOUND)
+    }
 
-	r := csv.NewReader(file)
-	problems, err := r.ReadAll()
-	if err != nil {
-		fmt.Printf("Error al leer el archivo %s.\n%s\n", *csvFile, err.Error())
-		os.Exit(ERROR_READING_QUIZ_CSV_FILE)
-	}
-	fmt.Println(problems)
+    r := csv.NewReader(file)
+    problems, err := r.ReadAll()
+    if err != nil {
+        fmt.Printf("Error al leer el archivo %s.\n%s\n", *csvFile, err.Error())
+        os.Exit(ERROR_READING_QUIZ_CSV_FILE)
+    }
+    fmt.Println(problems)
 }
 ```
 
@@ -153,8 +153,8 @@ En nuestro caso, definimos:
 
 ```go
 type pregunta struct {
-	enunciado  string
-	respuesta string
+    enunciado  string
+    respuesta string
 }
 ```
 
@@ -176,15 +176,15 @@ Recorremos el *slice* de *slices* con un bucle `for` y asignamos el primer valor
 
 ```go
 func parselines(lines [][]string) []pregunta {
-	var res []pregunta
-	res = make([]pregunta, len(lines))
-	for i, problema := range lines {
-		res[i] = pregunta{
-			enunciado: problema[0],
-			respuesta: problema[1],
-		}
-	}
-	return res
+    var res []pregunta
+    res = make([]pregunta, len(lines))
+    for i, problema := range lines {
+        res[i] = pregunta{
+            enunciado: problema[0],
+            respuesta: problema[1],
+        }
+    }
+    return res
 }
 ```
 
@@ -237,18 +237,18 @@ Hay varias formas de hacerlo; la más sencilla, es con alguna de las variantess 
 
 ```go
 for i := range problemas {
-		fmt.Printf("Pregunta %d:\t %s =\n", i+1, problemas[i].enunciado)
+        fmt.Printf("Pregunta %d:\t %s =\n", i+1, problemas[i].enunciado)
 
-		r := bufio.NewReader(os.Stdin)
-		res, err := r.ReadString('\n')
-		if err != nil {
-			fmt.Printf("Error al leer la respuesta %d.\n%s", i+1, err.Error())
-			os.Exit(ERROR_NO_ENTIENDO_RESPUESTA)
-		}
-		if problemas[i].respuesta == strings.Trim(res, "\n ") {
-			fmt.Println("Respuesta correcta")
-		}
-	}
+        r := bufio.NewReader(os.Stdin)
+        res, err := r.ReadString('\n')
+        if err != nil {
+            fmt.Printf("Error al leer la respuesta %d.\n%s", i+1, err.Error())
+            os.Exit(ERROR_NO_ENTIENDO_RESPUESTA)
+        }
+        if problemas[i].respuesta == strings.Trim(res, "\n ") {
+            fmt.Println("Respuesta correcta")
+        }
+    }
 ```
 
 Declaramos un nuevo *reader* y usamos el método `r.ReadString('\n')` para leer la entrada del usuario hasta que introduce una nueva línea (cuando pulsta `Enter`).
@@ -276,11 +276,11 @@ Tras el bucle, mostramos la puntuación acumulada:
 ```go
 var puntuacion int = 0
 for i := range problemas {
-	fmt.Printf("Pregunta %d:\t %s =\n", i+1, problemas[i].enunciado)
+    fmt.Printf("Pregunta %d:\t %s =\n", i+1, problemas[i].enunciado)
 
-	if problemas[i].respuesta == getUserAnswer() {
-		puntuacion++
-	}
+    if problemas[i].respuesta == getUserAnswer() {
+        puntuacion++
+    }
 }
 fmt.Printf("Ha respondido %d respuestas correctas de %d preguntas.\n", puntuacion, len(problemas))
 ```
@@ -297,86 +297,86 @@ El código resultante para esta primera parte del ejecicio es:
 package main
 
 import (
-	"bufio"
-	"encoding/csv"
-	"flag"
-	"fmt"
-	"os"
-	"strings"
+    "bufio"
+    "encoding/csv"
+    "flag"
+    "fmt"
+    "os"
+    "strings"
 )
 
 const (
-	QUIZ_FILE_NOT_FOUND         int = 1
-	ERROR_READING_QUIZ_CSV_FILE int = 2
-	ERROR_NO_ENTIENDO_RESPUESTA int = 3
+    QUIZ_FILE_NOT_FOUND         int = 1
+    ERROR_READING_QUIZ_CSV_FILE int = 2
+    ERROR_NO_ENTIENDO_RESPUESTA int = 3
 )
 
 type pregunta struct {
-	enunciado string
-	respuesta string
+    enunciado string
+    respuesta string
 }
 
 func parselines(lines [][]string) []pregunta {
-	var res []pregunta
-	res = make([]pregunta, len(lines))
-	for i, problema := range lines {
-		res[i] = pregunta{
-			enunciado: problema[0],
-			respuesta: strings.Trim(problema[1], " "),
-		}
-	}
-	return res
+    var res []pregunta
+    res = make([]pregunta, len(lines))
+    for i, problema := range lines {
+        res[i] = pregunta{
+            enunciado: problema[0],
+            respuesta: strings.Trim(problema[1], " "),
+        }
+    }
+    return res
 }
 
 func openFile(fileName string) *os.File {
-	file, err := os.Open(fileName)
-	if err != nil {
-		exit("Error al abrir el fichero.\n[ERROR] %s\n", err, QUIZ_FILE_NOT_FOUND)
-	}
-	return file
+    file, err := os.Open(fileName)
+    if err != nil {
+        exit("Error al abrir el fichero.\n[ERROR] %s\n", err, QUIZ_FILE_NOT_FOUND)
+    }
+    return file
 }
 
 func readFile(f *csv.Reader) [][]string {
-	var lineas [][]string
-	lineas, err := f.ReadAll()
-	if err != nil {
-		exit("Error al leer el archivo.\n[ERROR] %s\n", err, ERROR_READING_QUIZ_CSV_FILE)
-	}
-	return lineas
+    var lineas [][]string
+    lineas, err := f.ReadAll()
+    if err != nil {
+        exit("Error al leer el archivo.\n[ERROR] %s\n", err, ERROR_READING_QUIZ_CSV_FILE)
+    }
+    return lineas
 }
 
 func getUserAnswer() string {
-	r := bufio.NewReader(os.Stdin)
-	respuestaUsuario, err := r.ReadString('\n')
-	if err != nil {
-		exit("Error al leer la respuesta.\n[ERROR] %s\n", err, ERROR_NO_ENTIENDO_RESPUESTA)
-	}
-	return strings.Trim(respuestaUsuario, "\n ")
+    r := bufio.NewReader(os.Stdin)
+    respuestaUsuario, err := r.ReadString('\n')
+    if err != nil {
+        exit("Error al leer la respuesta.\n[ERROR] %s\n", err, ERROR_NO_ENTIENDO_RESPUESTA)
+    }
+    return strings.Trim(respuestaUsuario, "\n ")
 }
 
 func exit(msg string, err error, exitcode int) {
-	fmt.Printf(msg, err.Error())
-	os.Exit(exitcode)
+    fmt.Printf(msg, err.Error())
+    os.Exit(exitcode)
 }
 
 func main() {
-	csvFile := flag.String("csv", "problems.csv", "Fichero de problemas en formato 'enunciado,respuesta' (CSV)")
-	flag.Parse()
+    csvFile := flag.String("csv", "problems.csv", "Fichero de problemas en formato 'enunciado,respuesta' (CSV)")
+    flag.Parse()
 
-	r := csv.NewReader(openFile(*csvFile))
+    r := csv.NewReader(openFile(*csvFile))
 
-	var lineas [][]string
-	lineas = readFile(r)
-	problemas := parselines(lineas)
+    var lineas [][]string
+    lineas = readFile(r)
+    problemas := parselines(lineas)
 
-	var puntuacion int = 0
-	for i := range problemas {
-		fmt.Printf("Pregunta %d:\t %s =\n", i+1, problemas[i].enunciado)
+    var puntuacion int = 0
+    for i := range problemas {
+        fmt.Printf("Pregunta %d:\t %s =\n", i+1, problemas[i].enunciado)
 
-		if problemas[i].respuesta == getUserAnswer() {
-			puntuacion++
-		}
-	}
-	fmt.Printf("Ha respondido %d respuestas correctas de %d preguntas.\n", puntuacion, len(problemas))
+        if problemas[i].respuesta == getUserAnswer() {
+            puntuacion++
+        }
+    }
+    fmt.Printf("Ha respondido %d respuestas correctas de %d preguntas.\n", puntuacion, len(problemas))
 }
 ```
