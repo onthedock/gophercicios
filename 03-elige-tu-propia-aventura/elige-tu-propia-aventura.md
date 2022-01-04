@@ -369,18 +369,19 @@ Ejecutamos la plantilla -insertamos los datos procedentes del capítulo (si lo h
 Como ahora tenemos el contenido del mapa en la variable *chapter*, eliminamos el `h.s["intro"]`.
 
 ```go
-if chapter, ok := h.s[path], ok {
-    err := tpl.Execute(w, chapter)
-    if err != nil {
-      log.Printf("%v", err)
-      http.Error(w, "Something went wrong...", http.StatusInternalServerError)
-    }
-    return
-  }
-  http.Error(w, "Chapter not found", http.StatusNotFound)
-  
+	if chapter, ok := h.s[path]; ok {
+		err := tpl.Execute(w, chapter)
+		if err != nil {
+			log.Printf("%v", err)
+			http.Error(w, "Something went wrong...", http.StatusInternalServerError)
+		}
+		return
+	}
+	http.Error(w, "Chapter not found", http.StatusNotFound)
 ```
 
 Si se ha producido un error, lo mostramos en los logs (con `log.Printf()`) pero al usuario sólo le decimos que *algo ha salido mal* para evitar proporcionar demasiada información a un posible atacante. Como no sabemos qué es lo que ha pasado, devolvemos el código de error HTTP `http.StatusInternalServerError`.
 
 Si no se ha encontrado el capítulo, mostramos el mensaje al usuario y el código HTTP `http.StatusNotFound`.
+
+Podríamos convertir los mensajes de error en constantes, pero no es especialmente necesario para una aplicación como ésta.
