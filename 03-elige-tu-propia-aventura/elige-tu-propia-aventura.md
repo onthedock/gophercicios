@@ -385,3 +385,36 @@ Si se ha producido un error, lo mostramos en los logs (con `log.Printf()`) pero 
 Si no se ha encontrado el capítulo, mostramos el mensaje al usuario y el código HTTP `http.StatusNotFound`.
 
 Podríamos convertir los mensajes de error en constantes, pero no es especialmente necesario para una aplicación como ésta.
+
+## Plantilla personalizadas
+
+Uno de los problemas que tiene la aplicación tal y como está ahora es que no es extensible, ni fácilmente modificable. La plantilla que usamos, por ejemplo, está *hardcodeada* en el código; así que una de las primeras modificaciones que podemos hacer es la de permitir personalizar la plantilla aplicada.
+
+Para ello, definimos una variable `t *template.Template` en el *handler* (en el fichero `story.go`)
+
+```go
+type handler struct {
+	s Story
+	t *template.Template
+}
+```
+
+También modficamos la función `NewHandler` para que el usuario pueda pasar una plantilla; si no lo hace, usaremos la plantilla por defecto:
+
+```go
+func NewHandler(s Story, t *template.Template) http.Handler {
+	if t == nil {
+		t = tpl
+	}
+	return handler{s, t}
+}
+```
+
+También tenemos que actualizar la llamada desde `/cmd/cyoaweb/main.go`, aunque de momento, pasamos `nil`:
+
+```go
+h := cyoa.NewHandler(story, nil)
+```
+
+
+
