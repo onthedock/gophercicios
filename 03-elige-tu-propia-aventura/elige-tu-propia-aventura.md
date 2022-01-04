@@ -192,10 +192,10 @@ Si no se ha producido un error, devolvemos la `Story` (y `nil`).
 Volviendo a `cmd/cyoaweb/main.go`, el bloque que hemos convertido en la función `JsonStory` se convierte en:
 
 ```go
-	story, err := cyoa.JsonStory(f)
-	if err != nil {
-		panic(err)
-	}
+  story, err := cyoa.JsonStory(f)
+  if err != nil {
+    panic(err)
+  }
 ```
 
 En realidad no hemos *reducido* el número de líneas de código, pero quizás tiene más sentido esta nueva organización, lo que puede simplificar el mantenimiento del código.
@@ -269,7 +269,7 @@ En `ServeHTTP`, *parseamos* la plantilla:
 ```go
 func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
   tpl := template.Must(template.New("").Parse(defaultHandlerTemplate))
-	fmt.Printf("%+v", tpl)
+  fmt.Printf("%+v", tpl)
 }
 ```
 
@@ -283,7 +283,7 @@ Movemos la declaración de la función `tpl` al principio del fichero `story.go`
 
 ```go
 func init() {
-	tpl = template.Must(template.New("").Parse(defaultHandlerTemplate))
+  tpl = template.Must(template.New("").Parse(defaultHandlerTemplate))
 }
 
 var tpl *template.Template
@@ -293,11 +293,11 @@ De esta forma, el *handler* queda *vacío* (temporalmente):
 
 ```go
 func NewHandler(s Story) http.Handler {
-	return handler{s}
+  return handler{s}
 }
 
 type handler struct {
-	s Story
+  s Story
 }
 
 func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -334,3 +334,53 @@ fmt.Printf("Starting CYOA server on port %d\n", *port)
 log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), h))
 ```
 
+## Navegando por nuestra aventura
+
+El siguiente paso es comprobar a dónde tenemos que saltar -a qué capítulo- al pulsar sobre las opciones que se muestran tras cada capítulo.
+
+Empezamos averiguando en qué capítulo estamos; esto lo conseguimos a través del campo `r.URL.Path` en la *request* del *handler* (eliminamos espacios adicionales usando `strings.TrimSpace()` aunque no debería haber ninguno, sólo como medida de precaución).
+
+A continuación, si el `path` está vacío o es `/`, asumimos que estamos empezando la *aventura*, por lo que redirigimos hacia el primer capítulo, que siempre se llama **intro**:
+
+```go
+path = "/intro"
+```
+
+Para el resto de casos, eliminamos la `/` inicial mediante:
+
+```go
+path = path[1:]
+```
+
+Si todo ha funcionado correctamente, ahora `path` contiene el nombre de un *chapter*:
+
+```go
+if chapter, ok := h.s[path], ok {
+   ...
+}
+```
+
+`h.s[path]` usa el valor contenido en `path` como *clave* del *map*; si lo encuentra, devuelve su valor, por lo que `chapter` contendrá el texto del capítulo.
+
+Aunque no hace falta asignar el segundo valor a ninguna variable (indica si se ha encontrado algo o no), lo asignamos a `ok` porque de esta manera podemos validar si se ha encontrado el valor de `path` en el *map*.
+
+Ejecutamos la plantilla -insertamos los datos procedentes del capítulo (si lo hemos encontrado)- y verificamos si se ha producido un error.
+
+Como ahora tenemos el contenido del mapa en la variable *chapter*, eliminamos el `h.s["intro"]`.
+
+```go
+if chapter, ok := h.s[path], ok {
+    err := tpl.Execute(w, chapter)
+    if err != nil {
+      log.Printf("%v", err)
+      http.Error(w, "Something went wrong...", http.StatusInternalServerError)
+    }
+    return
+  }
+  http.Error(w, "Chapter not found", http.StatusNotFound)
+  
+```
+
+Si se ha producido un error, lo mostramos en los logs (con `log.Printf()`) pero al usuario sólo le decimos que *algo ha salido mal* para evitar proporcionar demasiada información a un posible atacante. Como no sabemos qué es lo que ha pasado, devolvemos el código de error HTTP `http.StatusInternalServerError`.
+
+Si no se ha encontrado el capítulo, mostramos el mensaje al usuario y el código HTTP `http.StatusNotFound`.
