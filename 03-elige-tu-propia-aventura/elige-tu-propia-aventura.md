@@ -4,6 +4,10 @@ El objetivo del ejercicio es reproducir en formato web uno de los libros de "[El
 
 Las historias se proporcionan en formato JSON con la siguiente estructura:
 
+> Al haber cambiado los nombres de los campos en la *struct* que contiene la historia *importada* desde el fichero JSON, el *matching* entre los campos cuyos nombres cambiaron `story --> paragraphs` y `arc --> chapter` fallaba y los campos en el *struct* aparecían vacíos. Esto hacía que no se insertara nigún valor en el *template* HTML, y que el texto de cada *página* de la historia se mostrara en blanco.
+>
+> Ha sido necesario modificar el fichero `gopher.json` y actualizar los nombres de los campos para que se muestre el valor de los campos en el navegador.
+
 ```json
 {
   // Each story arc will have a unique key that represents
@@ -27,6 +31,30 @@ Las historias se proporcionan en formato JSON con la siguiente estructura:
   },
   ...
 }
+```
+
+Los campos en el fichero deben ser:
+
+```json
+{
+  "intro": {
+    "title": "The Little Blue Gopher",
+    "paragraphs": [
+      "Once upon a time, ...",
+      "One of his friends ...",
+      "On the other hand, ..."
+    ],
+    "options": [
+      {
+        "text": "That story about the Sticky Bandits isn't real, it is from Home Alone 2! Let's head to New York.",
+        "chapter": "new-york"
+      },
+      {
+        "text": "Gee, those bandits sound pretty real to me. Let's play it safe and try our luck in Denver.",
+        "chapter": "denver"
+      }
+    ]
+  }
 ```
 
 Vamos a importar la historia en una *struct* usando el servicio online [JSON to Go](https://mholt.github.io/json-to-go/), que permite convertir un fichero JSON en la definición de una *struct* en Go.
