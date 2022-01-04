@@ -48,7 +48,7 @@ func main() {
     ...
 ```
 
-Y la función  getUserAnswer()`:
+Y la función `getUserAnswer()`:
 
 ```go
 func getUserAnswer() {
@@ -65,7 +65,7 @@ func getUserAnswer() {
 
 ## `select`
 
-El temporizador se ejecuta *en segundo plano* hasta que pasa el tiempo especificado y entonces, se escribe en el canal asociado al temporaizador; en mi caso, `temporizador.C`.
+El temporizador se ejecuta *en segundo plano* hasta que pasa el tiempo especificado y entonces, devuelve un mensaje en el canal asociado al temporizador; en mi caso, `temporizador.C`.
 
 Para que la llamada a la función `getUserAnswer()` no bloquee la ejecución del programa, la *convertimos* en una *goroutine* llamándola precedida de `go`:
 
