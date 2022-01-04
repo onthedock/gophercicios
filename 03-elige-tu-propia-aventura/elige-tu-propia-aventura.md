@@ -172,3 +172,137 @@ Volviendo a `cmd/cyoaweb/main.go`, el bloque que hemos convertido en la función
 
 En realidad no hemos *reducido* el número de líneas de código, pero quizás tiene más sentido esta nueva organización, lo que puede simplificar el mantenimiento del código.
 
+## Plantilla HTML y servidor web
+
+Generamos una plantilla en HTML para mostrar nuestra historia.
+
+Vamos a usar el paquete [`html/template`](https://pkg.go.dev/html/template) para poblar una plantilla de HTML desde Go.
+
+> Usamos la plantilla que proporciona VSCode para HTML5, aunque no necesitamos la mayoría de campos *extra*.
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>Choose Your Own Adventure</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+</head>
+<body>
+    <h1>{{.Title}}</h1>
+
+    {{range .Paragraphs}}
+    <p>{{.}}</p>
+    {{end}}
+
+    <ul>
+      {{range .Options}}
+      <li><a href="/{{.Chapter}}">{{.Text}}</a><li>
+      {{end}}
+    </ul>
+</body>
+</html>
+```
+
+Podríamos guardar la plantilla como un fichero, y cargarlo desde la aplicación. Pero tratándose de una plantilla tan sencilla, lo más fácil es almacenar la plantilla en una variable, en el fichero `story.go`.
+
+Creamos la variable `defaultHandlerTemplate` antes de la función `JsonStory` y pegamos el contenido de la plantilla usando (*backtics*) `` `...` `` (lo que nos permite tener cadenas de múltiples líneas).
+
+Una vez tenemos la plantilla, necesitamos algo para *dibujar* (*render*) esta plantilla; tenemos que crear *algo* que pueda ser usado en las aplicaciones web para gestionar peticiones HTTP; para ello, revisando el paquete `http` tenemos `HandlerFunc` y `Handler` (que es un *interface*).
+
+En este caso usaremos el *Handler* (más adelante veremos porqué).
+
+Creamos un nuevo *handler* que toma una *Story* como argumento y devuelve un `http.Handler`:
+
+> El autor no entra en detalles del porqué de esta "construcción", pero me temo que es uno de esos *patrones* que "tienen sentido" cuando sabes los tipos de objetos con los que estás trabajando.
+>
+> Al final, estamos consiguiendo lo que pretendíamos, que era crear una función a la que pasamos un `Story` y nos devuelve un `http.Handler` que puede usar un servidor web.
+>
+> Por lo que entiendo, creamos el objeto *handler* (un *struct*) basado en un *Story* y le asignamos el método *ServeHTTP*; la función `NewHandler` actúa como *constructor* del *handler* asociado a la *Story*.
+
+```go
+// Constructor de "handler"
+func NewHandler(s Story) http.Handler {
+  return handler{s}
+}
+// handler (con minúscula, no exportado)
+type handler struct {
+  s Story
+}
+// el método del handler para construir el `http.Handler` a partir de la `Story`
+func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+  ...
+}
+```
+
+En `ServeHTTP`, *parseamos* la plantilla:
+
+```go
+func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+  tpl := template.Must(template.New("").Parse(defaultHandlerTemplate))
+	fmt.Printf("%+v", tpl)
+}
+```
+
+Usamos [`template.Must()`](https://pkg.go.dev/html/template), que finaliza con *panic* si se produce un error al *parsear* la plantilla HTML. Esto es lo que necesitamos en este caso, porque si la plantilla no es válida, no se mostrará la historia y por tanto la aplicación no funcionará.
+
+Muchas veces, en vez de validar la plantilla en el *handler*, se realiza la validación de la plantilla cuando se inicaliza el código (o se carga la plantilla).
+
+Podríamos definir la variable `tpl *template.Template` al principio del código (como una variable global, pero no exportada) y usar la función [`init()`](https://go.dev/doc/effective_go#init) (que se ejecuta cuando se inicializa el código) para validar la plantilla.
+
+Movemos la declaración de la función `tpl` al principio del fichero `story.go` y realizamos la validación de la plantilla en la función `init` del *package*:
+
+```go
+func init() {
+	tpl = template.Must(template.New("").Parse(defaultHandlerTemplate))
+}
+
+var tpl *template.Template
+```
+
+De esta forma, el *handler* queda *vacío* (temporalmente):
+
+```go
+func NewHandler(s Story) http.Handler {
+	return handler{s}
+}
+
+type handler struct {
+	s Story
+}
+
+func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+}
+```
+
+### Validando nuestro progreso
+
+Para validar la plantilla, deberíamos pasar una *Story* al *handler*; la única *Story* que sabemos **seguro** que existirá es la `intro` (así lo hemos decidido, que la primera *story* en cualquier fichero sea `intro`).
+
+En la función, elegimos pasar la *story* `intro` usando [template.Execute](https://pkg.go.dev/html/template#Template.Execute):
+
+```go
+err := tpl.Execute(w, h.s["intro"])
+if err != nil {
+  panic(err) // Porque estamos en desarrollo, pero no es una buena idea
+}
+```
+
+Añadimos una nueva *flag* para especificar el puerto en el que escuchará el servidor web de *Choose your own adventure* y lanzamos el servidor.
+
+En `cmd/cyoaweb/main.go`:
+
+```go
+port := flag.Int("port", "3000", "Port where the CYOA server listens")
+```
+
+Finalmente, eliminamos la línea que muestra el contenido del fichero por pantalla y los sustituimos por la llamada al *NewHandler*:
+
+```go
+h := cyoa.NewHandler(story)
+fmt.Printf("Starting CYOA server on port %d\n", *port)
+log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), h))
+```
+
