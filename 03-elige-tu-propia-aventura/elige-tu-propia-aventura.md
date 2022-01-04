@@ -416,5 +416,72 @@ También tenemos que actualizar la llamada desde `/cmd/cyoaweb/main.go`, aunque 
 h := cyoa.NewHandler(story, nil)
 ```
 
+## Parametrizando las funciones
 
+Si queremos ir ampliando las opciones de personalización de las funciones -para que se pueda construir el *path* de forma personalizada, o analizar de alguna otra forma, etc- tenemos que ir incluyendo cada vez más y más opciones... Y lo que es peor, si no se personalizan, tendremos que pasar `nil` o algo por el estilo.
 
+Podemos usar [variadic functions](https://gobyexample.com/variadic-functions), que permiten pasar un número variable de parámetros a las funciones... Pero esta solución tampoco es ideal porque se pueden dar escenarios en los que tengamos dependencias entre algunos parámetros y no entre otros... Y entonces tendremos que controlar si se han proporcionado todos los parámetros relacionados, etc...
+
+Lo ideal en este caso, sería poder extender las opciones disponibles en las funciones sin excesiva sobrecarga.
+
+Al parecer, existe un patrón llamado *functional options* (David Cheney) que permite extender las funciones (Jon se refiere a [Functional options for friendly APIs](https://dave.cheney.net/2014/10/17/functional-options-for-friendly-apis)).
+
+La idea es crear un nuevo `type`, en nuestro caso `HandlerOption` que es una función a la que pasamos un puntero (para que lo pueda modificar) de tipo `handler`:
+
+```go
+type HandlerOption func(h *handler)
+```
+
+A continuación, para extender la función, usaremos:
+
+```go
+func NewHandler(s Story, opts ...HandlerOption) http.Handler {
+}
+```
+
+Ahora, lo que podemos hacer es crear una función que lo que hace es modificar el *handler* (aunque el *handler* nunca está expuesto para que el usuario lo pueda modificar directamente):
+
+```go
+func WithTemplate(t *template.Template) HandlerOption {
+  return func(h *handler) {
+    h.t = t
+  }
+}
+```
+
+Ahora, el constructor del *handler*:
+
+```go
+func NewHandler(s Story, opts ...HandlerOption) http.Handler {
+  h := handler{s, tpl}
+  for _, opt := range opts {
+    opt(&h)
+  }
+  return h
+}
+```
+
+Empezamos usando `s` (no es opcional, necesitamos una *story*) y usando la plantilla a partir de la variable global `tpl`.
+
+Después, recorremos las opciones que se hayan pasado y pasamos la referencia al *handler*.
+
+Con estas modificaciones, la llamada al *constructor* sería, si queremos usar todos las opciones por defecto:
+
+```go
+h := cyoa.NewHandler(story)
+```
+
+Y si queremos pasar una plantilla personalizada (en este caso, `tpl`)
+
+```go
+// Este template no usa ninguna variable, sólo la cadena Hello! en todos los casos
+tpl := template.Must(template.New("").Parse("Hello!"))
+h := cyoa.NewHandler(story, cyoa.WithTemplate(nil))
+```
+
+Para que se use la plantilla "como parámetro" y no la variable global que estábamos usando hasta ahora, hay que modificar la función `ServeHTTP` en `story.go` y cambiar `tpl.Execute` por `h.t.Execute`:
+
+```go
+	if chapter, ok := h.s[path]; ok {
+		err := h.t.Execute(w, chapter)
+```

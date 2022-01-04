@@ -28,7 +28,11 @@ func main() {
 		panic(err)
 	}
 
-	h := cyoa.NewHandler(story, nil)
+	// Si queremos usar una plantilla personalizada,
+	// usamos cyoa.WithTemplate(tpl) y pasamos nuestra plantilla:
+	// tpl := template.Must(template.New("").Parse("Hello!"))
+	// h := cyoa.NewHandler(story, cyoa.WithTemplate(tpl))
+	h := cyoa.NewHandler(story)
 	fmt.Printf("Starting CYOA server on port %d\n", *port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), h))
 }
