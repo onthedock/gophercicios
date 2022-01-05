@@ -175,7 +175,7 @@ Esta función toma como argumento un `io.Reader` y devolverá una `Story` (y un 
 
 ```go
 // Punto de partida!!
-func JsonStory(r io.Reader) Story, error {
+func JsonStory(r io.Reader) (Story, error) {
   d := json.NewDecoder(r)
   var story cyoa.Story
   err = d.Decode(&story)
@@ -476,7 +476,7 @@ Y si queremos pasar una plantilla personalizada (en este caso, `tpl`)
 ```go
 // Este template no usa ninguna variable, sólo la cadena Hello! en todos los casos
 tpl := template.Must(template.New("").Parse("Hello!"))
-h := cyoa.NewHandler(story, cyoa.WithTemplate(nil))
+h := cyoa.NewHandler(story, cyoa.WithTemplate(tpl))
 ```
 
 Para que se use la plantilla "como parámetro" y no la variable global que estábamos usando hasta ahora, hay que modificar la función `ServeHTTP` en `story.go` y cambiar `tpl.Execute` por `h.t.Execute`:
