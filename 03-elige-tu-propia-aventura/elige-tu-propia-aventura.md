@@ -126,10 +126,11 @@ Como el fichero está en formato JSON, usamos `json.NewDecoder()`. `json.NewDeco
 > Jon usa la forma *compacta*:
 >
 > ```go
-> if 	err := d.Decode(&story); err != nil {
+> if err := d.Decode(&story); err != nil {
 >      panic(err)
 > }
 > ```
+>
 > en la que asigna el resultado de *decodificar* el fichero y comprobar si hay un error en la misma  línea.
 >
 > Esto es equivalente a:
@@ -369,15 +370,15 @@ Ejecutamos la plantilla -insertamos los datos procedentes del capítulo (si lo h
 Como ahora tenemos el contenido del mapa en la variable *chapter*, eliminamos el `h.s["intro"]`.
 
 ```go
-	if chapter, ok := h.s[path]; ok {
-		err := tpl.Execute(w, chapter)
-		if err != nil {
-			log.Printf("%v", err)
-			http.Error(w, "Something went wrong...", http.StatusInternalServerError)
-		}
-		return
-	}
-	http.Error(w, "Chapter not found", http.StatusNotFound)
+  if chapter, ok := h.s[path]; ok {
+    err := tpl.Execute(w, chapter)
+    if err != nil {
+      log.Printf("%v", err)
+      http.Error(w, "Something went wrong...", http.StatusInternalServerError)
+    }
+    return
+  }
+  http.Error(w, "Chapter not found", http.StatusNotFound)
 ```
 
 Si se ha producido un error, lo mostramos en los logs (con `log.Printf()`) pero al usuario sólo le decimos que *algo ha salido mal* para evitar proporcionar demasiada información a un posible atacante. Como no sabemos qué es lo que ha pasado, devolvemos el código de error HTTP `http.StatusInternalServerError`.
@@ -394,8 +395,8 @@ Para ello, definimos una variable `t *template.Template` en el *handler* (en el 
 
 ```go
 type handler struct {
-	s Story
-	t *template.Template
+  s Story
+  t *template.Template
 }
 ```
 
@@ -403,10 +404,10 @@ También modficamos la función `NewHandler` para que el usuario pueda pasar una
 
 ```go
 func NewHandler(s Story, t *template.Template) http.Handler {
-	if t == nil {
-		t = tpl
-	}
-	return handler{s, t}
+  if t == nil {
+    t = tpl
+  }
+  return handler{s, t}
 }
 ```
 
@@ -482,6 +483,6 @@ h := cyoa.NewHandler(story, cyoa.WithTemplate(tpl))
 Para que se use la plantilla "como parámetro" y no la variable global que estábamos usando hasta ahora, hay que modificar la función `ServeHTTP` en `story.go` y cambiar `tpl.Execute` por `h.t.Execute`:
 
 ```go
-	if chapter, ok := h.s[path]; ok {
-		err := h.t.Execute(w, chapter)
+  if chapter, ok := h.s[path]; ok {
+    err := h.t.Execute(w, chapter)
 ```
